@@ -1,0 +1,75 @@
+datasource db {
+  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
+  provider          = "postgresql"
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+model Artist {
+  id        Int      @id @default(autoincrement())
+  cover     String?
+  avatar    String?
+  name      String?
+  contacts  String?
+  clerkId   String?  @unique
+  slug      String?  @unique
+  albums    Album[]
+  createdAt DateTime @default(now())
+}
+
+model Favorites {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  albumId   Int
+  album     Album    @relation(fields: [albumId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  name   String?
+  color  String?
+  icon   String?
+  albums Album[]
+}
+
+model Song {
+  id        Int      @id @default(autoincrement())
+  name      String
+  albumId   Int
+  album     Album    @relation(fields: [albumId], references: [id])
+  audioUrl  String
+  duration  Int
+  position  Int      @default(1)
+  createdAt DateTime @default(now())
+}
+
+enum Status {
+  DRAFT
+  PROCESSING
+  PUBLISHED
+}
+
+model Album {
+  id             Int         @id @default(autoincrement())
+  slug           String      @unique
+  name           String
+  cover          String?
+  authorId       Int
+  author         Artist      @relation(fields: [authorId], references: [id])
+  categoryId     Int?
+  category       Category?   @relation(fields: [categoryId], references: [id])
+  isSingle       Boolean     @default(false)
+  status         Status      @default(DRAFT)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  songs          Song[]
+  downloadsCount Int         @default(0)
+  favorites      Favorites[]
+  favoriteCount  Int         @default(0)
+}
